@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
     continue-on-error: ${{ vars.CHECKS_BLOCK_DEPLOY != '1' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: shivammathur/setup-php@v2
@@ -32,7 +32,7 @@ jobs:
     name: composer
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: shivammathur/setup-php@v2
@@ -45,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: composer
           path: |-
@@ -60,11 +60,11 @@ jobs:
     name: phpmd
     needs:
       - composer
-    if: ${{ vars.USE_PHPMD != '0' }}
+    if: ${{ (vars.USE_PHPMD || '1') != '0' }}
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
     continue-on-error: ${{ vars.CHECKS_BLOCK_DEPLOY != '1' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: shivammathur/setup-php@v2
@@ -73,7 +73,7 @@ jobs:
           extensions: ${{ env.PHP_EXTENSIONS }}
           tools: composer:${{ env.COMPOSER_VERSION }}
           coverage: none
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: composer
           path: .
@@ -85,11 +85,11 @@ jobs:
     name: phpstan
     needs:
       - composer
-    if: ${{ vars.USE_PHPSTAN != '0' }}
+    if: ${{ (vars.USE_PHPSTAN || '1') != '0' }}
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
     continue-on-error: ${{ vars.CHECKS_BLOCK_DEPLOY != '1' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: shivammathur/setup-php@v2
@@ -98,7 +98,7 @@ jobs:
           extensions: ${{ env.PHP_EXTENSIONS }}
           tools: composer:${{ env.COMPOSER_VERSION }}
           coverage: none
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: composer
           path: .
@@ -110,14 +110,14 @@ jobs:
     name: stylelint
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
-      - run: npm install --global stylelint
-      - run: bash .aicrew/server/stylelint.sh
+      - run: npm install --no-save --no-package-lock stylelint stylelint-config-standard-scss
+      - run: PATH="$PWD/node_modules/.bin:$PATH" bash .aicrew/server/stylelint.sh
   deploy_staging:
     name: deploy staging
     needs:
@@ -140,7 +140,7 @@ jobs:
       DEPLOY_ENVIRONMENT: staging
       DEPLOY_ROLE: staging
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Deploy

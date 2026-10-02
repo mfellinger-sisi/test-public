@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 env:
-  PROJECT_TYPE: symfony
+  PROJECT_TYPE: typo3
   PHP_VERSION: ${{ vars.PHP_VERSION || '8.2' }}
   COMPOSER_VERSION: ${{ vars.COMPOSER_VERSION || '2.2.30' }}
   PHP_EXTENSIONS: ${{ vars.PHP_EXTENSIONS || 'gd intl pdo_mysql sodium zip' }}
@@ -50,7 +50,10 @@ jobs:
           name: composer
           path: |-
             composer.lock
+            Packages/Libraries/
+            public/
             vendor/
+            web/typo3conf/ext
           if-no-files-found: ignore
           retention-days: 1
   phpmd:
@@ -103,6 +106,18 @@ jobs:
         env:
           PHPSTAN_PHAR: ${{ runner.temp }}/phpstan.phar
           USE_PHPSTAN: ${{ vars.USE_PHPSTAN }}
+  stylelint:
+    name: stylelint
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - run: npm install --global stylelint
+      - run: bash .aicrew/server/stylelint.sh
   deploy_staging:
     name: deploy staging
     needs:
@@ -110,6 +125,7 @@ jobs:
       - composer
       - phpmd
       - phpstan
+      - stylelint
     if: ${{ !cancelled() && !contains(needs.*.result, 'failure') && github.ref_name == (vars.DEPLOY_STAGING_BRANCH || 'staging') }}
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-latest' }}
     environment:

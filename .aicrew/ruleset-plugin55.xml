@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<ruleset name="Shopware 5.5 Plugin" namespace="SisiPluginTemplate5\CS\Standard">
+    <description>A codesniffer ruleset for Shopware 5 plugins</description>
+    <rule ref="PSR2" />
+
+    <rule ref="PSR1.Classes.ClassDeclaration">
+        <exclude-pattern>*/Controllers/Backend/*</exclude-pattern>
+        <exclude-pattern>*/Controllers/Frontend/*</exclude-pattern>
+        <exclude-pattern>*/Shopware/Plugins/Community/*</exclude-pattern>
+    </rule>
+
+    <rule ref="Squiz.Classes.ValidClassName">
+        <exclude-pattern>*/Controllers/Backend/*</exclude-pattern>
+        <exclude-pattern>*/Controllers/Frontend/*</exclude-pattern>
+        <exclude-pattern>*/Shopware/Plugins/Community/*</exclude-pattern>
+        <exclude-pattern>sisi*.php</exclude-pattern>
+    </rule>
+</ruleset>

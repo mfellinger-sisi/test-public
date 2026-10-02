@@ -1,0 +1,14 @@
+{
+  "extends": "stylelint-config-standard-scss",
+  "ignoreFiles": [
+    "build/**/*",
+    "src/app/assets/scss/fonts/*",
+    "node_modules/",
+    "vendor/**/*"
+  ],
+  "rules": {
+    "declaration-block-no-redundant-longhand-properties": null,
+    "selector-class-pattern": "^[a-z0-9]+([_\\-]+[a-z0-9]+)*$",
+    "shorthand-property-no-redundant-values": null
+  }
+}

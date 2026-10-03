@@ -3,6 +3,9 @@
 Newest first. One `## <version>` heading per release; the install preview shows the entries between the installed
 and the new release. Patch = fixes, minor = new variables, major = changes that need action.
 
+## 1.0.4
+- README: own rules go into `.config/` of the repository (wins over `.aicrew/`, never overwritten by an update).
+
 ## 1.0.3
 - `CHANGES.md` and `MANIFEST` are installed with the files: an update lists what changed, and files edited by hand
   since the install are flagged before they are overwritten.

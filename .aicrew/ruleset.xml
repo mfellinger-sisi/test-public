@@ -3,6 +3,5 @@
     <description>Default phpcs ruleset</description>
     <rule ref="PSR12">
         <exclude-pattern>*/node_modules/*</exclude-pattern>
-        <exclude-pattern>"/thirdParty/"</exclude-pattern>
     </rule>
 </ruleset>

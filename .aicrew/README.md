@@ -100,6 +100,20 @@ through stdin; it never lands in the project directory or in a log.
 `common/server/`, run `node packages/deploy/scripts/sync-common.mjs`, bump
 `VERSION` and run `node packages/deploy/scripts/bundle-hash.mjs --update`.
 
+## Your own rules (`.config/`)
+
+Keep project-specific rules in a `.config/` folder of the repository, not in `.aicrew/`: an update replaces
+`.aicrew/` as a whole (files edited there are flagged and overwritten), `.config/` is never touched. A file
+there wins over the one shipped:
+
+| Tool | File in `.config/` |
+|---|---|
+| php-codesniffer | `ruleset.xml` |
+| phpmd | `phpmd.xml` |
+| phpstan | `phpstan.neon`, or `phpstan-server-<PROJECT_TYPE>.neon` |
+| stylelint | `.stylelintrc.json` |
+| yamllint | `.yamllint` |
+
 ## Version
 
 `VERSION` holds the installed version (semver); `cat .aicrew/VERSION` in a

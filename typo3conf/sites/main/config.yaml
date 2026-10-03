@@ -1,0 +1,21 @@
+rootPageId: 1
+base: /
+baseVariants:
+  -
+    base: 'https://ai-crew-test.eywora.com/github-public-staging/'
+    condition: 'applicationContext == "Development/staging"'
+websiteTitle: 'signundsinn GmbH'
+dependencies:
+  - typo3/fluid-styled-content
+languages:
+  -
+    title: Deutsch
+    enabled: true
+    languageId: 0
+    base: /
+    locale: de_DE.UTF-8
+    navigationTitle: Deutsch
+    flag: de
+    websiteTitle: 'signundsinn GmbH'
+errorHandling: []
+routes: []

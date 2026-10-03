@@ -1,0 +1,75 @@
+# Minimal project TypoScript of the base installation.
+#
+# It is imported by the root template record ("Website (signundsinn)") of the
+# page tree and only makes sure that the site delivers a valid page: the page
+# title, the content elements of the main column and the company's address
+# line. Layout, templates and the real content rendering will move into the
+# site package extension - from then on this file can be removed.
+#
+# No external resources (fonts, CDN libraries, trackers) are referenced here:
+# everything is served from the site's own domain.
+
+config {
+    absRefPrefix = auto
+    doctype = html5
+    htmlTag.attributes.lang = de
+    metaCharset = utf-8
+    disablePrefixComment = 1
+    sendCacheHeaders = 1
+}
+
+page = PAGE
+page {
+    typeNum = 0
+
+    meta {
+        viewport = width=device-width, initial-scale=1
+        description.field = description
+        robots = index,follow
+    }
+
+    headerData.10 = TEXT
+    headerData.10.value (
+        <style>
+            body { margin: 0; padding: 3rem 1.5rem; background: #fff; color: #1a1a1a;
+                   font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.6; }
+            main { max-width: 42rem; margin: 0 auto; }
+            h1 { font-size: 1.75rem; margin-bottom: .5rem; }
+            img { max-width: 100%; height: auto; }
+            footer { max-width: 42rem; margin: 3rem auto 0; font-size: .875rem; color: #666; }
+        </style>
+    )
+
+    10 = COA
+    10 {
+        # Page title
+        10 = TEXT
+        10 {
+            field = title
+            htmlSpecialChars = 1
+            wrap = <main><h1>|</h1>
+        }
+
+        # Content elements of the main column; a hint as long as there are none
+        20 = CONTENT
+        20 {
+            table = tt_content
+            select {
+                orderBy = sorting
+                where = {#colPos}=0
+            }
+            stdWrap.ifEmpty (
+                <p>Die TYPO3-Grundinstallation ist aktiv. Seitenstruktur, Design und
+                Inhalte folgen in den nächsten Arbeitspaketen.</p>
+            )
+        }
+
+        30 = TEXT
+        30.value (
+            </main>
+            <footer>
+                signundsinn GmbH &middot; Jean-Paul-Richter-Str. 3 &middot; 81369 München
+            </footer>
+        )
+    }
+}

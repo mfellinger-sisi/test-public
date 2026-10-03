@@ -66,7 +66,10 @@ fi
 
 # ---------------------------------------------------------------------------
 # 3. First run: install TYPO3. Without database credentials from the CI the
-#    installation uses SQLite, which needs no database server.
+#    installation uses SQLite, which needs no database server. If the project
+#    is later moved to MySQL (CI variable DEPLOY_DATABASE_URL, see README),
+#    the credentials in typo3conf/system/additional.php take precedence over
+#    the values written here - the existing content has to be migrated.
 # ---------------------------------------------------------------------------
 if [ ! -f typo3conf/system/settings.php ]; then
     log "no settings.php yet - installing TYPO3"

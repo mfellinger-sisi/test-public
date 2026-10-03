@@ -31,6 +31,8 @@ jobs:
   composer:
     name: composer
     runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    outputs:
+      packages: ${{ steps.packages.outputs.present }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -45,6 +47,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+      - id: packages
+        run: for p in 'composer.lock' 'Packages/Libraries/' 'public/' 'vendor/' 'web/typo3conf/ext'; do if [ -e "$p" ]; then echo present=true >> "$GITHUB_OUTPUT"; break; fi; done
       - uses: actions/upload-artifact@v6
         with:
           name: composer
@@ -77,7 +81,7 @@ jobs:
         with:
           name: composer
           path: .
-        continue-on-error: true
+        if: ${{ needs.composer.outputs.packages == 'true' }}
       - run: bash .aicrew/server/phpmd.sh
         env:
           PHPMD_PHAR: ${{ runner.temp }}/phpmd.phar
@@ -103,7 +107,7 @@ jobs:
         with:
           name: composer
           path: .
-        continue-on-error: true
+        if: ${{ needs.composer.outputs.packages == 'true' }}
       - run: bash .aicrew/server/phpstan.sh
         env:
           PHPSTAN_PHAR: ${{ runner.temp }}/phpstan.phar

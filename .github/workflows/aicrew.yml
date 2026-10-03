@@ -15,7 +15,7 @@ env:
 jobs:
   php_codesniffer:
     name: php-codesniffer
-    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
     continue-on-error: ${{ vars.CHECKS_BLOCK_DEPLOY != '1' }}
     steps:
       - uses: actions/checkout@v6
@@ -30,7 +30,7 @@ jobs:
       - run: bash .aicrew/server/phpcs.sh
   composer:
     name: composer
-    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
     outputs:
       packages: ${{ steps.packages.outputs.present }}
     steps:
@@ -65,7 +65,7 @@ jobs:
     needs:
       - composer
     if: ${{ (vars.USE_PHPMD || '1') != '0' }}
-    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
     continue-on-error: ${{ vars.CHECKS_BLOCK_DEPLOY != '1' }}
     steps:
       - uses: actions/checkout@v6
@@ -91,7 +91,7 @@ jobs:
     needs:
       - composer
     if: ${{ (vars.USE_PHPSTAN || '1') != '0' }}
-    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
     continue-on-error: ${{ vars.CHECKS_BLOCK_DEPLOY != '1' }}
     steps:
       - uses: actions/checkout@v6
@@ -114,7 +114,7 @@ jobs:
           USE_PHPSTAN: ${{ vars.USE_PHPSTAN }}
   stylelint:
     name: stylelint
-    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -133,7 +133,7 @@ jobs:
       - phpstan
       - stylelint
     if: ${{ !cancelled() && !contains(needs.*.result, 'failure') && github.ref_name == (vars.DEPLOY_STAGING_BRANCH || 'staging') }}
-    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-24.04' }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
     environment:
       name: staging
       url: ${{ vars.DEPLOY_URL }}

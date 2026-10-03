@@ -66,7 +66,8 @@ README for the meaning of each). Where they live on GitHub:
   `PHP_VERSION`, `COMPOSER_VERSION`, `PHP_EXTENSIONS`, `PHPSTAN_VERSION`,
   `PHPMD_VERSION`, `USE_PHPSTAN`, `USE_PHPMD`, `USE_YAMLLINT`,
   `CHECKS_BLOCK_DEPLOY`, `AICREW_RUNNER` (a runner label for self-hosted runners,
-  default `ubuntu-24.04`: pinned on purpose, `ubuntu-latest` moves to Ubuntu 26.04 from 2026-10-19; set `ubuntu-26.04` to try it).
+  default `ubuntu-26.04`: pinned on purpose instead of `ubuntu-latest`, which would move under the pipeline; set
+  `ubuntu-24.04` to go back to the previous image).
 - Names must not start with `GITHUB_`, values are limited to 48 KB.
 
 GitHub has no file-type variables and hands a job only the names the workflow
@@ -81,7 +82,7 @@ through stdin; it never lands in the project directory or in a log.
 
 ## Requirements
 
-- GitHub-hosted `ubuntu-24.04` runners, or self-hosted ones (label in
+- GitHub-hosted `ubuntu-26.04` runners, or self-hosted ones (label in
   `AICREW_RUNNER`) with bash, `jq` or `python3`, `curl`, ssh and either root or `sudo`
   with apt (the deploy installs `dnsutils` and `openssh-client` when missing).
 - Outbound access to github.com (actions, phars) and getcomposer.org.
@@ -105,4 +106,5 @@ through stdin; it never lands in the project directory or in a log.
 repository tells which release it runs. The deploy log prints it
 (`deploy/github 1.0.0`). Bump it in every change that repositories need to
 re-install: patch for fixes, minor for new variables, major for anything that
-changes the generated workflow in a way that needs action.
+changes the generated workflow in a way that needs action. Every release gets an entry in `CHANGES.md` (a test
+fails without one); the install preview shows the entries between the installed and the new version.

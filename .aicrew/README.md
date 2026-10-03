@@ -66,7 +66,7 @@ README for the meaning of each). Where they live on GitHub:
   `PHP_VERSION`, `COMPOSER_VERSION`, `PHP_EXTENSIONS`, `PHPSTAN_VERSION`,
   `PHPMD_VERSION`, `USE_PHPSTAN`, `USE_PHPMD`, `USE_YAMLLINT`,
   `CHECKS_BLOCK_DEPLOY`, `AICREW_RUNNER` (a runner label for self-hosted runners,
-  default `ubuntu-latest`).
+  default `ubuntu-24.04`: pinned on purpose, `ubuntu-latest` moves to Ubuntu 26.04 from 2026-10-19; set `ubuntu-26.04` to try it).
 - Names must not start with `GITHUB_`, values are limited to 48 KB.
 
 GitHub has no file-type variables and hands a job only the names the workflow
@@ -81,7 +81,7 @@ through stdin; it never lands in the project directory or in a log.
 
 ## Requirements
 
-- GitHub-hosted `ubuntu-latest` runners, or self-hosted ones (label in
+- GitHub-hosted `ubuntu-24.04` runners, or self-hosted ones (label in
   `AICREW_RUNNER`) with bash, `jq` or `python3`, `curl`, ssh and either root or `sudo`
   with apt (the deploy installs `dnsutils` and `openssh-client` when missing).
 - Outbound access to github.com (actions, phars) and getcomposer.org.

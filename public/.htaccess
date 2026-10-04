@@ -317,14 +317,10 @@ AddDefaultCharset utf-8
 	RewriteRule ^(?:typo3_src|typo3temp/var) - [F]
 	RewriteRule (?:typo3conf/ext|typo3/sysext|typo3/ext)/[^/]+/(?:Configuration|Resources/Private|Tests?|Documentation|docs?)/ - [F]
 
-	# PROJECT: in this installation the project root is the document root (the
-	# hosting serves .../web/<project>/ directly), so vendor/, typo3conf/ and the
-	# repository's own folders are physically inside the web path. Everything
-	# below vendor/ is blocked except the published public resources of TYPO3
-	# extensions (CSS/JS/icons of the backend are loaded from there).
-	RewriteRule ^vendor/(?![^/]+/[^/]+/Resources/Public/) - [F]
-	RewriteRule ^(?:typo3conf|Build|config)(?:/|$) - [F]
-	RewriteRule ^(?:\.aicrew|\.devcrew|\.github|\.reports)(?:/|$) - [F]
+	# PROJECT: standard composer layout - this public/ folder is the document
+	# root (the hosting serves only <project>/public). vendor/, config/, var/,
+	# Build/ and the repository's own folders lie outside of it and cannot be
+	# requested at all.
 
 	# Block access to all hidden files and directories with the exception of
 	# the visible content from within the `/.well-known/` hidden directory (RFC 5785).
@@ -335,7 +331,6 @@ AddDefaultCharset utf-8
 
 	# Stop rewrite processing, if we are in any known directory
 	# NOTE: Add your additional local storages here
-	# (typo3conf/ is NOT listed here on purpose - it is blocked above)
 	RewriteRule ^(?:fileadmin/|typo3temp/|uploads/) - [L]
 
 	# If the file/symlink/directory does not exist but is below /typo3/, redirect to the main TYPO3 entry point.
@@ -407,11 +402,4 @@ FileETag None
 
 
 # Add your own rules here.
-
-# The repository's README must not be readable through the web server.
-<IfModule mod_authz_core.c>
-	<FilesMatch "^(?:README\.md|composer\.(?:json|lock))$">
-		Require all denied
-	</FilesMatch>
-</IfModule>
 

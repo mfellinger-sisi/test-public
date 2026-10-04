@@ -1,7 +1,8 @@
 # Minimal project TypoScript of the base installation.
 #
-# It is imported by the root template record ("Website (signundsinn)") of the
-# page tree and only makes sure that the site delivers a valid page: the page
+# TYPO3 loads it automatically as the TypoScript of this site (the file lives
+# next to config.yaml), independent of the template record in the page tree. It
+# only makes sure that the site delivers a valid page: the page
 # title, the content elements of the main column and the company's address
 # line. Layout, templates and the real content rendering will move into the
 # site package extension - from then on this file can be removed.

@@ -11,7 +11,7 @@ use Doctrine\DBAL\DriverManager;
  *
  * TYPO3 is deliberately not booted here: the check has to work on an
  * installation whose configuration is still incomplete. The connection is
- * built straight from typo3conf/system/settings.php (plus additional.php, in
+ * built straight from config/system/settings.php (plus additional.php, in
  * the same order TYPO3 reads them).
  *
  * Exit codes (evaluated by Build/deploy.sh):
@@ -28,8 +28,8 @@ $projectRoot = dirname(__DIR__, 2);
 
 require $projectRoot . '/vendor/autoload.php';
 
-$settingsFile = $projectRoot . '/typo3conf/system/settings.php';
-$additionalFile = $projectRoot . '/typo3conf/system/additional.php';
+$settingsFile = $projectRoot . '/config/system/settings.php';
+$additionalFile = $projectRoot . '/config/system/additional.php';
 
 $settings = is_file($settingsFile) ? require $settingsFile : [];
 $parameters = [];
@@ -50,7 +50,7 @@ if (is_file($additionalFile)) {
 unset($parameters['wrapperClass'], $parameters['tableoptions'], $parameters['initCommands']);
 
 if (($parameters['driver'] ?? '') === '') {
-    fwrite(STDERR, "[database] no database configuration found in typo3conf/system/\n");
+    fwrite(STDERR, "[database] no database configuration found in config/system/\n");
     exit(DATABASE_UNREACHABLE);
 }
 

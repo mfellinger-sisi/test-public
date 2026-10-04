@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * Prints the database credentials of typo3conf/system/additional.php as shell
+ * Prints the database credentials of config/system/additional.php as shell
  * "export" lines, so that Build/deploy.sh can hand them to "typo3 setup".
  *
  * Why: "typo3 setup" creates the database schema in the database it is told
@@ -22,7 +22,7 @@ declare(strict_types=1);
  */
 
 $projectRoot = dirname(__DIR__, 2);
-$file = $projectRoot . '/typo3conf/system/additional.php';
+$file = $projectRoot . '/config/system/additional.php';
 
 if (!is_file($file)) {
     exit(0);

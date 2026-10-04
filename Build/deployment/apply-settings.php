@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * Applies this project's TYPO3 settings to typo3conf/system/settings.php.
+ * Applies this project's TYPO3 settings to config/system/settings.php.
  *
  * Only the keys listed below are managed here, everything else in the file
  * stays untouched: database credentials, the encryption key and the install
@@ -13,7 +13,7 @@ declare(strict_types=1);
  */
 
 $projectRoot = dirname(__DIR__, 2);
-$settingsFile = $projectRoot . '/typo3conf/system/settings.php';
+$settingsFile = $projectRoot . '/config/system/settings.php';
 
 if (!is_file($settingsFile)) {
     fwrite(STDERR, "[settings] $settingsFile does not exist\n");

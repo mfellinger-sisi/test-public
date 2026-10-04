@@ -18,16 +18,27 @@ jedem Deployment Datenbank, Erweiterungen und Caches aktualisieren.
 
 ## Verzeichnis-Layout
 
-Das Hosting liefert das Projektverzeichnis direkt als DocumentRoot aus
-(`…/web/<projekt>/`). TYPO3 legt seine Konfiguration daher in `typo3conf/` und
-seine Laufzeitdaten in `typo3temp/` ab (nicht in `config/` bzw. `var/`).
-`vendor/`, `typo3conf/`, `Build/` und die Dateien des Repositories liegen damit
-physisch im Web-Pfad und werden von der `.htaccess` gesperrt – Änderungen an
-diesen Regeln bitte immer gegen das Live-Layout prüfen.
+Standard-Layout von TYPO3 für Composer-Projekte (`extra.typo3/cms.web-dir` =
+`public`). Der Webserver liefert **nur** `public/` aus – auf Staging per
+Apache-`Alias /github-public-staging <Projekt>/public`. Alles andere liegt
+außerhalb des Web-Pfads und ist nicht abrufbar:
 
-Nicht versioniert (wird je Umgebung erzeugt): `vendor/`, `index.php`,
-`typo3/`, `_assets/`, `typo3temp/`, `fileadmin/`, `typo3conf/*` außer
-`typo3conf/sites/`.
+| Ordner | Inhalt |
+| --- | --- |
+| `public/` | Web-Root: `.htaccess` (versioniert), `index.php`, `typo3/`, `_assets/`, `fileadmin/`, `typo3temp/` (erzeugt) |
+| `config/sites/` | Site-Konfiguration (versioniert): `main/config.yaml` und das Projekt-TypoScript `main/setup.typoscript` |
+| `config/system/` | `settings.php` (von TYPO3 erzeugt) und `additional.php` (von der CI aus `DEPLOY_DATABASE_URL`), nicht versioniert |
+| `var/` | Laufzeitdaten: Logs, Cache, SQLite-Datenbank, Erstpasswort – nicht versioniert |
+| `Build/` | Deployment-Skripte |
+
+Nicht versioniert (wird je Umgebung erzeugt): `vendor/`, alles in `public/`
+außer `.htaccess`, `var/`, `config/system/`.
+
+Eine Installation aus dem früheren Layout (Projektwurzel als Web-Root,
+Konfiguration in `typo3conf/`) übernimmt `Build/deploy.sh` beim nächsten
+Deployment automatisch (`Build/deployment/migrate-legacy-layout.php`):
+`settings.php` und Datenbank bleiben erhalten, `fileadmin/` zieht nach
+`public/fileadmin/` um, die alten Verzeichnisse werden entfernt.
 
 ## Umgebungen
 
@@ -56,20 +67,19 @@ Die CI führt auf dem Server nach `git pull` aus:
   Sprachpakete und Caches.
 
 Das Passwort des initial angelegten Backend-Benutzers `admin` steht auf dem
-Server in `typo3temp/var/initial-admin-password.txt` (nicht über das Web
+Server in `var/initial-admin-password.txt` (nicht über das Web
 erreichbar). Alternativ: `php8.2 vendor/bin/typo3 backend:resetpassword`.
 
 ### Datenbank
 
 Ohne Zugangsdaten installiert sich TYPO3 mit SQLite
-(`typo3conf/cms-*.sqlite`). Für MySQL/MariaDB genügt die CI-Variable
+(`var/sqlite/cms-*.sqlite`). Für MySQL/MariaDB genügt die CI-Variable
 `DEPLOY_DATABASE_URL` (`mysql://user:pass@host:3306/datenbank`): die Pipeline
-schreibt daraus `config/system/additional.php`, `Build/deploy.sh` übernimmt die
-Datei nach `typo3conf/system/additional.php`. Bestehende Inhalte müssen dabei
-migriert werden.
+schreibt daraus `config/system/additional.php`, das TYPO3 direkt liest.
+Bestehende Inhalte müssen bei einem Wechsel der Datenbank migriert werden.
 
 Bei der Erstinstallation liest `Build/deployment/read-database-env.php` die
-Zugangsdaten aus `typo3conf/system/additional.php`, und `Build/deploy.sh`
+Zugangsdaten aus `config/system/additional.php`, und `Build/deploy.sh`
 übergibt sie als `TYPO3_DB_*` an `typo3 setup`. Ohne das würde das Setup das
 Schema in SQLite anlegen, während alle weiteren Schritte gegen MySQL arbeiten
 („Table 'be_users' doesn't exist“ bei `extension:setup`). Die Zugangsdaten
@@ -82,10 +92,9 @@ das Deployment bricht nach dem Setup mit „Access denied for user
 ''@'localhost'“ ab. `Build/deployment/apply-database-config.php` hält das
 gerade:
 
-1. Es übernimmt `config/system/additional.php` nur mit nutzbaren Zugangsdaten.
-2. Eine unbrauchbare `typo3conf/system/additional.php` aus einem früheren
-   Deployment wird entfernt.
-3. Hat die Installation danach gar keine nutzbare Datenbank-Konfiguration
+1. Eine unbrauchbare `config/system/additional.php` (ohne Zugangsdaten) wird
+   entfernt, eine mit nutzbaren Zugangsdaten bleibt unverändert.
+2. Hat die Installation danach gar keine nutzbare Datenbank-Konfiguration
    mehr, wird eine neue SQLite-Datenbank eingetragen. Eine Konfiguration mit
    vollständigen Zugangsdaten bleibt immer unangetastet.
 
@@ -96,9 +105,9 @@ das Deployment mit klarer Meldung ab, statt eine 500-Seite auszuliefern.
 
 ## Application Context und Site-Konfiguration
 
-Web-Requests erhalten den Kontext über die `.htaccess`: Pfade unter
+Web-Requests erhalten den Kontext über die `public/.htaccess`: Pfade unter
 `/github-public-staging/` laufen als `Development/staging`, alles andere als
-`Production`. `typo3conf/sites/main/config.yaml` wählt daran die Basis-URL
+`Production`. `config/sites/main/config.yaml` wählt daran die Basis-URL
 (`baseVariants`). Kommt eine weitere Umgebung hinzu, beide Stellen ergänzen.
 
 Die Basis-URLs sind absichtlich **relativ** (`/` bzw.
@@ -110,8 +119,9 @@ kommt aus dem Request bzw. aus `X-Forwarded-Proto`.
 
 ## Frontend
 
-Das Frontend rendert vorläufig über `Build/TypoScript/setup.typoscript`
-(Seitentitel, Inhaltselemente der Hauptspalte, Adresszeile). Layout und
+Das Frontend rendert vorläufig über das Site-TypoScript
+`config/sites/main/setup.typoscript` (Seitentitel, Inhaltselemente der
+Hauptspalte, Adresszeile); TYPO3 lädt es automatisch neben `config.yaml`. Layout und
 Templates ziehen mit dem Sitepackage in eine eigene Extension um; danach kann
 die Datei entfallen. Externe Ressourcen (Fonts, CDN-Bibliotheken, Tracker)
 werden nicht eingebunden – alles kommt von der eigenen Domain.

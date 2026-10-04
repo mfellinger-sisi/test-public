@@ -14,7 +14,7 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ADMIN_USER="admin"
 ADMIN_EMAIL="kunde@example.com"
 PROJECT_NAME="signundsinn GmbH"
-PASSWORD_FILE="typo3temp/var/initial-admin-password.txt"
+PASSWORD_FILE="var/initial-admin-password.txt"
 
 log() {
     echo "[deploy] $*"
@@ -51,23 +51,48 @@ typo3() {
 }
 
 # ---------------------------------------------------------------------------
-# 2. Directories the installation needs. The document root is the project
-#    root, therefore TYPO3 keeps its configuration in typo3conf/ and its
-#    runtime data in typo3temp/var/ (both blocked by .htaccess).
+# 2. Directories the installation needs. This is the standard TYPO3 composer
+#    layout: public/ is the document root (the only folder the web server
+#    serves), configuration lives in config/ and runtime data in var/ - both,
+#    like vendor/ and Build/, outside of the web root.
+#
+#    An installation from the earlier layout (project root as document root,
+#    configuration in typo3conf/) is migrated first, so its settings, database
+#    and uploaded files survive the switch.
 # ---------------------------------------------------------------------------
-mkdir -p typo3conf/system typo3conf/sites typo3temp/var fileadmin
+migrate_legacy_layout() {
+    [ -f typo3conf/system/settings.php ] || return 0
 
-# The CI deployment writes database credentials from DEPLOY_DATABASE_URL into
-# config/system/additional.php (composer layout). This installation reads
-# typo3conf/system/additional.php, so the file is taken over here - but only
-# when it contains usable credentials (see the script for the details).
+    log "migrating the earlier layout (typo3conf/) to config/, var/ and public/"
+    mkdir -p config/system var public
+    "$PHP_BIN" Build/deployment/migrate-legacy-layout.php
+
+    if [ -d fileadmin ] && [ ! -e public/fileadmin ]; then
+        mv fileadmin public/fileadmin
+    fi
+    if [ -f typo3temp/var/initial-admin-password.txt ] && [ ! -e "$PASSWORD_FILE" ]; then
+        mv typo3temp/var/initial-admin-password.txt "$PASSWORD_FILE"
+    fi
+
+    # What is left is generated again below public/ (index.php, typo3/,
+    # _assets/, typo3temp/) or has been taken over above.
+    rm -rf typo3conf typo3temp index.php typo3 _assets uploads
+}
+
+migrate_legacy_layout
+
+mkdir -p config/system config/sites var public/fileadmin
+
+# The CI deployment writes the credentials of DEPLOY_DATABASE_URL into
+# config/system/additional.php, which TYPO3 reads directly. An unusable file
+# (no credentials) is removed again, see the script for the details.
 "$PHP_BIN" Build/deployment/apply-database-config.php
 
 # ---------------------------------------------------------------------------
 # 3. Installation. Without database credentials from the CI the installation
 #    uses SQLite, which needs no database server. With credentials from the
 #    CI (CI variable DEPLOY_DATABASE_URL, see README) they are read from
-#    typo3conf/system/additional.php and handed to the setup, so schema,
+#    config/system/additional.php and handed to the setup, so schema,
 #    settings.php and the following steps all use the same MySQL database.
 #
 #    "typo3 setup" writes the configuration, creates the database schema and
@@ -79,7 +104,7 @@ install_typo3() {
     local initial_password
     initial_password="$("$PHP_BIN" Build/deployment/generate-password.php)"
 
-    # The credentials of typo3conf/system/additional.php (CI deployment) go to
+    # The credentials of config/system/additional.php (CI deployment) go to
     # the setup, so schema and settings.php land in the same database that the
     # following steps use. Without them the setup would fall back to SQLite
     # while everything after it works on MySQL. Done in a subshell: the
@@ -114,7 +139,7 @@ install_typo3_setup() {
         typo3 setup --no-interaction --force
 }
 
-if [ ! -f typo3conf/system/settings.php ]; then
+if [ ! -f config/system/settings.php ]; then
     log "no settings.php yet - installing TYPO3"
     install_typo3
 else
@@ -133,7 +158,7 @@ else
             install_typo3
             ;;
         *)
-            log "ERROR: the database of typo3conf/system/settings.php cannot be reached (see above)."
+            log "ERROR: the database of config/system/settings.php cannot be reached (see above)."
             log "       Set DEPLOY_DATABASE_URL in the deployment or remove the wrong credentials."
             exit 1
             ;;

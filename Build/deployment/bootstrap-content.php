@@ -13,9 +13,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * after the first deployment:
  *
  *  - the root page (uid 1) the site configuration in
- *    typo3conf/sites/main/config.yaml points to,
- *  - the root TypoScript template that imports
- *    Build/TypoScript/setup.typoscript,
+ *    config/sites/main/config.yaml points to,
+ *  - the root TypoScript template record (the TypoScript itself comes from
+ *    config/sites/main/setup.typoscript, the site configuration),
  *  - a backend administrator, if the database contains none.
  *
  * Every step is skipped when the record already exists, so the script can run
@@ -81,7 +81,7 @@ if ($countRows('sys_template') === 0) {
         // stays included - it provides the rendering of the content elements.
         'clear' => 0,
         'constants' => '',
-        'config' => "@import 'Build/TypoScript/setup.typoscript'\n",
+        'config' => '',
         'hidden' => 0,
         'deleted' => 0,
         'sorting' => 256,
@@ -91,6 +91,16 @@ if ($countRows('sys_template') === 0) {
     echo "[content] root TypoScript template created\n";
 } else {
     echo "[content] TypoScript template already exists\n";
+
+    // Installations from before the composer layout imported the TypoScript
+    // from Build/TypoScript/, which is no longer reachable that way. It now
+    // comes from the site configuration, so the obsolete import is removed.
+    $legacyImport = "@import 'Build/TypoScript/setup.typoscript'\n";
+    $connectionPool->getConnectionForTable('sys_template')->update(
+        'sys_template',
+        ['config' => '', 'tstamp' => $now],
+        ['config' => $legacyImport]
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -122,12 +132,12 @@ if ($countRows('be_users') === 0) {
         'crdate' => $now,
     ]);
 
-    $passwordFile = $projectRoot . '/typo3temp/var/initial-admin-password.txt';
+    $passwordFile = $projectRoot . '/var/initial-admin-password.txt';
     $previousUmask = umask(0077);
     file_put_contents($passwordFile, $password . PHP_EOL);
     umask($previousUmask);
 
-    echo "[content] backend administrator created, password written to typo3temp/var/initial-admin-password.txt\n";
+    echo "[content] backend administrator created, password written to var/initial-admin-password.txt\n";
 } else {
     echo "[content] backend user already exists\n";
 }

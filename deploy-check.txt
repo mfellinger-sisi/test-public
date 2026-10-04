@@ -1,2 +1,0 @@
-signundsinn staging deploy check (T-7)
-Diese Datei liegt im Repository-Root. Ist sie unter /github-public-staging/deploy-check.txt erreichbar, wird genau dieses Verzeichnis ausgeliefert.

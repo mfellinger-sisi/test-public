@@ -94,12 +94,19 @@ emit_repo_auth() {
       echo "git config --global url.\"https://x-access-token:${GITHUB_TOKEN}@${GH_HOST}/\".insteadOf \"https://${GH_HOST}/\" || exit 58"
       ;;
     composer)
-      # skipped without a composer.json (e.g. classic TYPO3): composer config would fail
+      # skipped without a composer.json (e.g. classic TYPO3). The job token expires within the hour, so it is NEVER written
+      # to composer's global auth.json: a composer older than 2.2.30 refuses a token with a "-" in it, and one such token
+      # left there fails every later composer call on that server (exit 34). It travels in COMPOSER_AUTH for this deploy
+      # only, as http-basic (no format check). A token an older deploy left in auth.json is removed first.
+      local php="$PHP_DIR/$PHP_CMD"
       echo "if [[ -f composer.json ]]; then"
+      echo "  for f in \"\${COMPOSER_HOME:-/nonexistent}/auth.json\" \"\${XDG_CONFIG_HOME:-\$HOME/.config}/composer/auth.json\" \"\$HOME/.composer/auth.json\"; do"
+      echo "    if [[ -f \"\$f\" ]]; then GH_HOST='${GH_HOST}' $php -r '\$a = json_decode(file_get_contents(\$argv[1]), true); \$h = getenv(\"GH_HOST\"); if (is_array(\$a) && isset(\$a[\"github-oauth\"][\$h])) { unset(\$a[\"github-oauth\"][\$h]); file_put_contents(\$argv[1], json_encode(\$a, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); }' \"\$f\"; fi"
+      echo "  done"
       if [[ "$GH_HOST" != "github.com" ]]; then
-        echo "  $PHP_DIR/$PHP_CMD $COMPOSER_CMD config -g github-domains github.com ${GH_HOST} || exit 34"
+        echo "  $php $COMPOSER_CMD config -g github-domains github.com ${GH_HOST} || exit 34"
       fi
-      echo "  $PHP_DIR/$PHP_CMD $COMPOSER_CMD config -g github-oauth.${GH_HOST} ${GITHUB_TOKEN} || exit 34"
+      echo "  export COMPOSER_AUTH=\$(AUTH_IN=\"\${COMPOSER_AUTH:-}\" GH_HOST='${GH_HOST}' GH_TOK='${GITHUB_TOKEN}' $php -r '\$a = json_decode(getenv(\"AUTH_IN\") ?: \"{}\", true); if (!is_array(\$a)) \$a = []; \$h = getenv(\"GH_HOST\"); if (!isset(\$a[\"http-basic\"][\$h])) { \$a[\"http-basic\"][\$h] = [\"username\" => \"x-access-token\", \"password\" => getenv(\"GH_TOK\")]; } echo json_encode(\$a, JSON_UNESCAPED_SLASHES);')"
       echo "fi"
       ;;
     *) echo "emit_repo_auth: unknown phase $1" >&2 ; exit 4 ;;

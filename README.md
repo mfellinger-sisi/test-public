@@ -29,6 +29,17 @@ Nicht versioniert (wird je Umgebung erzeugt): `vendor/`, `index.php`,
 `typo3/`, `_assets/`, `typo3temp/`, `fileadmin/`, `typo3conf/*` außer
 `typo3conf/sites/`.
 
+## Umgebungen
+
+Es gibt genau **eine** Testumgebung (Staging):
+<http://ai-crew-test.dev.signundsinn.de/github-public-staging/> (Branch
+`staging`, Server `dev2`, PHP 8.2, Zugriff über die bekannte Zugangsabfrage).
+
+Die frühere Testumgebung `ai-crew-test.eywora.com/github-public-staging`
+(Webspace `web105` auf `int.signundsinn.de`) ist seit Oktober 2026
+abgeschaltet und liefert nur noch eine Hinweisseite – siehe
+`Build/legacy-staging/README.md`. Dort bitte nicht mehr testen.
+
 ## Deployment
 
 Die CI führt auf dem Server nach `git pull` aus:

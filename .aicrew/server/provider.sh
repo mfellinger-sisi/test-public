@@ -101,7 +101,7 @@ emit_repo_auth() {
       local php="$PHP_DIR/$PHP_CMD"
       echo "if [[ -f composer.json ]]; then"
       echo "  for f in \"\${COMPOSER_HOME:-/nonexistent}/auth.json\" \"\${XDG_CONFIG_HOME:-\$HOME/.config}/composer/auth.json\" \"\$HOME/.composer/auth.json\"; do"
-      echo "    if [[ -f \"\$f\" ]]; then GH_HOST='${GH_HOST}' $php -r '\$a = json_decode(file_get_contents(\$argv[1]), true); \$h = getenv(\"GH_HOST\"); if (is_array(\$a) && isset(\$a[\"github-oauth\"][\$h])) { unset(\$a[\"github-oauth\"][\$h]); file_put_contents(\$argv[1], json_encode(\$a, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); }' \"\$f\"; fi"
+      echo "    if [[ -f \"\$f\" ]]; then GH_HOST='${GH_HOST}' $php -r '\$a = json_decode(file_get_contents(\$argv[1])); \$h = getenv(\"GH_HOST\"); if (is_object(\$a) && isset(\$a->{\"github-oauth\"}->{\$h})) { unset(\$a->{\"github-oauth\"}->{\$h}); file_put_contents(\$argv[1], json_encode(\$a, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); }' \"\$f\"; fi"
       echo "  done"
       if [[ "$GH_HOST" != "github.com" ]]; then
         echo "  $php $COMPOSER_CMD config -g github-domains github.com ${GH_HOST} || exit 34"

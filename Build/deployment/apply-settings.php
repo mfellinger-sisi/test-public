@@ -65,7 +65,9 @@ $projectSettings = [
         // differs from the web server's own name and has to be allowed here.
         'trustedHostsPattern' => '(?:localhost|(?:[a-z0-9-]+\.)*eywora\.com|(?:[a-z0-9-]+\.)*signundsinn\.de)(?::\d+)?',
         // Let TYPO3 read the real client address and protocol from the
-        // proxy's X-Forwarded-* headers.
+        // proxy's X-Forwarded-* headers. The protocol is deliberately not
+        // forced to https (reverseProxySSL): the environment has to stay
+        // reachable over http as long as it has no own certificate.
         'reverseProxyIP' => '*',
         'reverseProxyHeaderMultiValue' => 'first',
     ],

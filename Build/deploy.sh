@@ -57,12 +57,9 @@ mkdir -p typo3conf/system typo3conf/sites typo3temp/var fileadmin
 
 # The CI deployment writes database credentials from DEPLOY_DATABASE_URL into
 # config/system/additional.php (composer layout). This installation reads
-# typo3conf/system/additional.php, so the file is taken over here.
-if [ -f config/system/additional.php ]; then
-    log "taking over config/system/additional.php (CI database configuration)"
-    cp config/system/additional.php typo3conf/system/additional.php
-    chmod 600 typo3conf/system/additional.php
-fi
+# typo3conf/system/additional.php, so the file is taken over here - but only
+# when it contains usable credentials (see the script for the details).
+"$PHP_BIN" Build/deployment/apply-database-config.php
 
 # ---------------------------------------------------------------------------
 # 3. First run: install TYPO3. Without database credentials from the CI the

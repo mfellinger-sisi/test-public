@@ -6,9 +6,11 @@ jedem Deployment Datenbank, Erweiterungen und Caches aktualisieren.
 
 ## Voraussetzungen
 
-* PHP **8.2** oder neuer (TYPO3 13 LTS). Auf dem Hosting steht PHP 8.2 als
-  `php8.2` bereit, `php` ist dort noch 8.1 – Composer deshalb immer mit
-  `php8.2 $(command -v composer) …` aufrufen.
+* PHP **8.2** oder neuer (TYPO3 13 LTS). Auf dem Hosting ist das Standard-`php`
+  der Login-Shell älter, PHP 8.2 steht als `php8.2` bzw.
+  `/usr/local/php/8.2/php` bereit – Composer deshalb immer mit
+  `php8.2 $(command -v composer) …` aufrufen. `Build/deploy.sh` sucht sich die
+  passende Version selbst (`TYPO3_PHP_BINARY` überschreibt die Suche).
 * Composer 2
 * Datenbank: SQLite (Standard der Erstinstallation) oder MySQL/MariaDB
 
@@ -53,12 +55,27 @@ schreibt daraus `config/system/additional.php`, `Build/deploy.sh` übernimmt die
 Datei nach `typo3conf/system/additional.php`. Bestehende Inhalte müssen dabei
 migriert werden.
 
+Wichtig: die Pipeline schreibt `config/system/additional.php` auch dann, wenn
+`DEPLOY_DATABASE_URL` nicht gesetzt ist – dann mit leerem Benutzer und leerem
+Datenbanknamen. `Build/deployment/apply-database-config.php` übernimmt die
+Datei deshalb nur, wenn sie wirklich nutzbare Zugangsdaten enthält, und
+entfernt eine unbrauchbare Kopie eines früheren Deployments wieder. Sonst
+überschreibt sie die funktionierende Verbindung und das Deployment bricht nach
+dem Setup mit „Access denied for user ''@'localhost'“ ab.
+
 ## Application Context und Site-Konfiguration
 
 Web-Requests erhalten den Kontext über die `.htaccess`: Pfade unter
 `/github-public-staging/` laufen als `Development/staging`, alles andere als
 `Production`. `typo3conf/sites/main/config.yaml` wählt daran die Basis-URL
 (`baseVariants`). Kommt eine weitere Umgebung hinzu, beide Stellen ergänzen.
+
+Die Basis-URLs sind absichtlich **relativ** (`/` bzw.
+`/github-public-staging/`) und enthalten keine Domain: TYPO3 findet seine Site
+damit unter jedem Hostnamen und sowohl über `http` als auch über `https`. Eine
+absolute Basis-URL führt bei jedem Domainwechsel zu „No site configuration
+found“. Aus demselben Grund wird `reverseProxySSL` nicht gesetzt – das Schema
+kommt aus dem Request bzw. aus `X-Forwarded-Proto`.
 
 ## Frontend
 

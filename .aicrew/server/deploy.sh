@@ -372,6 +372,20 @@ emit_console_command() {
   echo "$PHP_DIR/$PHP_CMD bin/console $1$2 || exit $3"
 }
 
+# A database URL goes through parse_url on the server, which returns false (and
+# the script would carry on with an empty user) when the password holds # / or ?.
+# Stops with exit 56 and the fix; never prints the value.
+check_db_url() {
+  local name="$1" url="$2" rest authority after
+  [[ -z "$url" ]] && return 0
+  if [[ "$url" == *"'"* ]]; then echo "$name contains a single quote, which can't be written to the server config" >&2 ; exit 56 ; fi
+  rest="${url#*://}"; authority="${rest%%/*}"; after="${rest#"$authority"}"; after="${after%%\?*}"
+  if [[ "$url" == *"#"* || "$authority" == *"?"* || "$after" == *"@"* ]]; then
+    echo "$name cannot be parsed: percent-encode special characters in the user and password (# = %23, / = %2F, ? = %3F, @ = %40, : = %3A)" >&2
+    exit 56
+  fi
+}
+
 # Dotenv bootstrap, shared by the project types whose config lives in env
 # files. Must run AFTER git_sync_block (the clone needs an empty dir). Values
 # are written to a file git doesn't track, so the deploy never conflicts with
@@ -436,7 +450,7 @@ emit_env_bootstrap() {
   # in that order (later lines replace earlier ones on the server)
   : > ci-deploy.env
   if [[ -n "$db_url" ]]; then
-    if [[ "$db_url" == *"'"* ]]; then echo "$db_var contains a single quote, which can't be written to $target" >&2 ; exit 56 ; fi
+    check_db_url "$db_var" "$db_url"
     printf "DATABASE_URL='%s'\n" "$db_url" >> ci-deploy.env
   fi
   if [[ -n "$env_file" && -f "$env_file" ]]; then
@@ -536,7 +550,7 @@ emit_shopware5_config() {
   if [[ -n "$cfg_file" && -f "$cfg_file" ]]; then
     cp "$cfg_file" ci-deploy.config.php
   elif [[ -n "$db_url" ]]; then
-    if [[ "$db_url" == *"'"* ]]; then echo "$db_var contains a single quote" >&2 ; exit 56 ; fi
+    check_db_url "$db_var" "$db_url"
     printf "DATABASE_URL='%s'\n" "$db_url" > ci-deploy.env
   fi
 
@@ -586,7 +600,7 @@ emit_typo3_config() {
   if [[ -n "$cfg_file" && -f "$cfg_file" ]]; then
     cp "$cfg_file" ci-deploy.config.php
   elif [[ -n "$db_url" ]]; then
-    if [[ "$db_url" == *"'"* ]]; then echo "$db_var contains a single quote" >&2 ; exit 56 ; fi
+    check_db_url "$db_var" "$db_url"
     printf "DATABASE_URL='%s'\n" "$db_url" > ci-deploy.env
   else
     return 0

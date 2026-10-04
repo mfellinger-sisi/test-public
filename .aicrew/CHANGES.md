@@ -3,6 +3,9 @@
 Newest first. One `## <version>` heading per release; the install preview shows the entries between the installed
 and the new release. Patch = fixes, minor = new variables, major = changes that need action.
 
+## 1.0.5
+- A database URL whose user or password holds `#`, `/` or `?` (or a single quote) now stops the deploy with exit 56 and says how to fix it (percent-encode it). Before, the script carried on with an empty user and failed later with "Access denied for user ''".
+
 ## 1.0.4
 - README: own rules go into `.config/` of the repository (wins over `.aicrew/`, never overwritten by an update).
 

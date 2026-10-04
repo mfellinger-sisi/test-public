@@ -155,3 +155,35 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           AICREW_VARS: ${{ toJSON(vars) }}
           AICREW_SECRETS: ${{ toJSON(secrets) }}
+  deploy_live:
+    name: deploy live
+    needs:
+      - php_codesniffer
+      - composer
+      - phpmd
+      - phpstan
+      - stylelint
+    if: ${{ !cancelled() && !contains(needs.*.result, 'failure') && github.ref_name == (vars.DEPLOY_LIVE_BRANCH || 'main') }}
+    runs-on: ${{ vars.AICREW_RUNNER || 'ubuntu-26.04' }}
+    environment:
+      name: live
+      url: ${{ vars.DEPLOY_URL }}
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-live
+      cancel-in-progress: false
+    env:
+      DEPLOY_ENVIRONMENT: live
+      DEPLOY_ROLE: live
+      DEPLOY_AUTO_DEPLOY: ${{ vars.DEPLOY_AUTO_DEPLOY || '1' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Deploy
+        run: bash .aicrew/server/deploy-${PROJECT_TYPE}.sh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AICREW_VARS: ${{ toJSON(vars) }}
+          AICREW_SECRETS: ${{ toJSON(secrets) }}

@@ -3,6 +3,9 @@
 Newest first. One `## <version>` heading per release; the install preview shows the entries between the installed
 and the new release. Patch = fixes, minor = new variables, major = changes that need action.
 
+## 1.0.8
+- A global composer `auth.json` whose empty sections were written as `[]` (by release 1.0.6) is repaired to `{}`: composer warned "Array value found, but an object is required" on every call.
+
 ## 1.0.7
 - The job token is no longer written to composer's global `auth.json`: it travels in `COMPOSER_AUTH` for the deploy only (http-basic), and a token an older deploy left there is removed. Composer 2.4.2 refuses a stored token with a `-` in it ("contains invalid characters"), and one such token made every later composer call on the server fail (exit 34); 2.4.4 and newer accept it.
 

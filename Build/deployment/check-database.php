@@ -42,6 +42,7 @@ if (is_array($settings)) {
 if (is_file($additionalFile)) {
     $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default'] = $parameters;
     require $additionalFile;
+    /** @var mixed $fromAdditional additional.php may overwrite the connection; PHPStan cannot see the require */
     $fromAdditional = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default'] ?? [];
     $parameters = is_array($fromAdditional) ? $fromAdditional : $parameters;
 }

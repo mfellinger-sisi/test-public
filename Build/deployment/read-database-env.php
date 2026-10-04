@@ -31,7 +31,9 @@ if (!is_file($file)) {
 $GLOBALS['TYPO3_CONF_VARS'] = [];
 require $file;
 
-$connection = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default'] ?? [];
+/** @var array<string, mixed> $typo3ConfVars set by additional.php; PHPStan cannot see the require */
+$typo3ConfVars = $GLOBALS['TYPO3_CONF_VARS'];
+$connection = $typo3ConfVars['DB']['Connections']['Default'] ?? [];
 
 if (!is_array($connection)) {
     exit(0);

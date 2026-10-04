@@ -1,0 +1,22 @@
+# Projekteigene PHPStan-Konfiguration (hat in der CI Vorrang vor .aicrew/phpstan-server.neon).
+# Analysiert die tatsaechlich vorhandenen PHP-Pfade des Projekts (Deployment-Skripte
+# unter Build/). Kommt eine eigene Extension bzw. ein Sitepackage dazu (extensions/
+# oder packages/), den Pfad unter "paths" ergaenzen.
+parameters:
+    level: 8
+    paths:
+        - %currentWorkingDirectory%/Build
+    excludePaths:
+        analyse:
+            - */vendor/*
+            - */node_modules/*
+    ignoreErrors:
+        # Die Deployment-Skripte laufen vor/neben TYPO3 und nutzen dessen Klassen aus
+        # vendor/, das PHPStan hier nicht einliest.
+        -
+            message: '#unknown class (TYPO3|Doctrine)\\#'
+            path: %currentWorkingDirectory%/Build/deployment/*
+        -
+            message: '#Class (TYPO3|Doctrine)\\.+ not found#'
+            path: %currentWorkingDirectory%/Build/deployment/*
+    reportUnmatchedIgnoredErrors: false

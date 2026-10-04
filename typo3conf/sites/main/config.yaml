@@ -2,7 +2,12 @@ rootPageId: 1
 base: /
 baseVariants:
   -
-    base: 'https://ai-crew-test.eywora.com/github-public-staging/'
+    # The staging installation is served from a subdirectory of the document
+    # root, which has to be part of the base so that links keep working. The
+    # base deliberately contains no domain: the staging host has changed
+    # before, and a relative base matches every host (and both http and https)
+    # the environment is reachable under.
+    base: /github-public-staging/
     condition: 'applicationContext == "Development/staging"'
 websiteTitle: 'signundsinn GmbH'
 dependencies:

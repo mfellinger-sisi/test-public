@@ -6,8 +6,12 @@ jedem Deployment Datenbank, Erweiterungen und Caches aktualisieren.
 
 ## Voraussetzungen
 
-* PHP **8.2** oder neuer (TYPO3 13 LTS). Auf dem Hosting steht PHP 8.2 als
-  `php8.2` bereit, `php` ist dort noch 8.1 – Composer deshalb immer mit
+* PHP **8.2** oder neuer (TYPO3 13 LTS). Das Deployment läuft mit der PHP-
+  Version der Umgebung (Staging: 8.2, `/usr/local/php/8.2/php`);
+  `Build/deploy.sh` nutzt genau diese (`php` im PATH des Deployments) und
+  sucht nur dann eine neuere, wenn sie älter als 8.2 ist. `TYPO3_PHP_BINARY`
+  überschreibt die Suche. Beim Arbeiten in der Login-Shell ist `php`
+  möglicherweise eine andere Version – Composer dort mit
   `php8.2 $(command -v composer) …` aufrufen.
 * Composer 2
 * Datenbank: SQLite (Standard der Erstinstallation) oder MySQL/MariaDB
@@ -53,12 +57,38 @@ schreibt daraus `config/system/additional.php`, `Build/deploy.sh` übernimmt die
 Datei nach `typo3conf/system/additional.php`. Bestehende Inhalte müssen dabei
 migriert werden.
 
+Wichtig: Deployments haben `config/system/additional.php` auch ohne gesetztes
+`DEPLOY_DATABASE_URL` geschrieben – dann mit leerem Benutzer und leerem
+Datenbanknamen. Diese Datei überschreibt die funktionierende Verbindung, und
+das Deployment bricht nach dem Setup mit „Access denied for user
+''@'localhost'“ ab. `Build/deployment/apply-database-config.php` hält das
+gerade:
+
+1. Es übernimmt `config/system/additional.php` nur mit nutzbaren Zugangsdaten.
+2. Eine unbrauchbare `typo3conf/system/additional.php` aus einem früheren
+   Deployment wird entfernt.
+3. Hat die Installation danach gar keine nutzbare Datenbank-Konfiguration
+   mehr, wird eine neue SQLite-Datenbank eingetragen. Eine Konfiguration mit
+   vollständigen Zugangsdaten bleibt immer unangetastet.
+
+`Build/deployment/check-database.php` prüft anschließend die Verbindung:
+ist die Datenbank erreichbar, aber leer (abgebrochene Erstinstallation), führt
+`Build/deploy.sh` die Installation zu Ende; ist sie nicht erreichbar, bricht
+das Deployment mit klarer Meldung ab, statt eine 500-Seite auszuliefern.
+
 ## Application Context und Site-Konfiguration
 
 Web-Requests erhalten den Kontext über die `.htaccess`: Pfade unter
 `/github-public-staging/` laufen als `Development/staging`, alles andere als
 `Production`. `typo3conf/sites/main/config.yaml` wählt daran die Basis-URL
 (`baseVariants`). Kommt eine weitere Umgebung hinzu, beide Stellen ergänzen.
+
+Die Basis-URLs sind absichtlich **relativ** (`/` bzw.
+`/github-public-staging/`) und enthalten keine Domain: TYPO3 findet seine Site
+damit unter jedem Hostnamen und sowohl über `http` als auch über `https`. Eine
+absolute Basis-URL führt bei jedem Domainwechsel zu „No site configuration
+found“. Aus demselben Grund wird `reverseProxySSL` nicht gesetzt – das Schema
+kommt aus dem Request bzw. aus `X-Forwarded-Proto`.
 
 ## Frontend
 

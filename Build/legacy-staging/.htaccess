@@ -1,0 +1,29 @@
+# Abgeschaltete Testumgebung (ai-crew-test.eywora.com/github-public-staging).
+# Liegt auf dem alten Webspace web105 anstelle des entfernten Projektstands.
+
+# Keine Verzeichnislisten, keine Suchmaschinen-Indexierung.
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+    Header always set Cache-Control "no-store"
+</IfModule>
+
+# Jeder Pfad unterhalb dieser Adresse (auch alte Deeplinks wie /typo3/)
+# beantwortet die Hinweisseite statt eines verwirrenden 403/404.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /github-public-staging/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule . index.html [L]
+</IfModule>
+
+ErrorDocument 403 /github-public-staging/index.html
+ErrorDocument 404 /github-public-staging/index.html
+
+# Kein PHP auf diesem Webspace ausführen.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php|phar|phtml)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

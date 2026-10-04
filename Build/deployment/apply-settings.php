@@ -77,7 +77,7 @@ $projectSettings = [
         'sitename' => 'signundsinn GmbH',
         // The sites are served through a reverse proxy, so the host header
         // differs from the web server's own name and has to be allowed here.
-        'trustedHostsPattern' => '(?:localhost|(?:[a-z0-9-]+\.)*eywora\.com|(?:[a-z0-9-]+\.)*signundsinn\.de)(?::\d+)?',
+        'trustedHostsPattern' => '(?:localhost|(?:[a-z0-9-]+\.)*signundsinn\.de)(?::\d+)?',
         // Let TYPO3 read the real client address and protocol from the
         // proxy's X-Forwarded-* headers. The protocol is deliberately not
         // forced to https (reverseProxySSL): the environment has to stay

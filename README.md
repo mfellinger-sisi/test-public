@@ -68,6 +68,13 @@ schreibt daraus `config/system/additional.php`, `Build/deploy.sh` übernimmt die
 Datei nach `typo3conf/system/additional.php`. Bestehende Inhalte müssen dabei
 migriert werden.
 
+Bei der Erstinstallation liest `Build/deployment/read-database-env.php` die
+Zugangsdaten aus `typo3conf/system/additional.php`, und `Build/deploy.sh`
+übergibt sie als `TYPO3_DB_*` an `typo3 setup`. Ohne das würde das Setup das
+Schema in SQLite anlegen, während alle weiteren Schritte gegen MySQL arbeiten
+(„Table 'be_users' doesn't exist“ bei `extension:setup`). Die Zugangsdaten
+landen dabei nur in der Umgebung des Setup-Prozesses, nie im Log.
+
 Wichtig: Deployments haben `config/system/additional.php` auch ohne gesetztes
 `DEPLOY_DATABASE_URL` geschrieben – dann mit leerem Benutzer und leerem
 Datenbanknamen. Diese Datei überschreibt die funktionierende Verbindung, und

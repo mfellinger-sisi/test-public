@@ -65,10 +65,10 @@ mkdir -p typo3conf/system typo3conf/sites typo3temp/var fileadmin
 
 # ---------------------------------------------------------------------------
 # 3. Installation. Without database credentials from the CI the installation
-#    uses SQLite, which needs no database server. If the project is later
-#    moved to MySQL (CI variable DEPLOY_DATABASE_URL, see README), the
-#    credentials in typo3conf/system/additional.php take precedence over the
-#    values written here - the existing content has to be migrated.
+#    uses SQLite, which needs no database server. With credentials from the
+#    CI (CI variable DEPLOY_DATABASE_URL, see README) they are read from
+#    typo3conf/system/additional.php and handed to the setup, so schema,
+#    settings.php and the following steps all use the same MySQL database.
 #
 #    "typo3 setup" writes the configuration, creates the database schema and
 #    the first backend user. It also runs when the configuration exists but
@@ -78,6 +78,27 @@ mkdir -p typo3conf/system typo3conf/sites typo3temp/var fileadmin
 install_typo3() {
     local initial_password
     initial_password="$("$PHP_BIN" Build/deployment/generate-password.php)"
+
+    # The credentials of typo3conf/system/additional.php (CI deployment) go to
+    # the setup, so schema and settings.php land in the same database that the
+    # following steps use. Without them the setup would fall back to SQLite
+    # while everything after it works on MySQL. Done in a subshell: the
+    # password stays out of this script's environment and out of the log.
+    (
+        database_env="$("$PHP_BIN" Build/deployment/read-database-env.php)"
+        eval "$database_env"
+        if [ -n "${TYPO3_DB_DRIVER:-}" ]; then
+            log "handing the credentials of the CI deployment (${TYPO3_DB_DRIVER}) to the setup"
+        fi
+        install_typo3_setup "$initial_password"
+    )
+
+    ( umask 077 ; printf '%s\n' "$initial_password" > "$PASSWORD_FILE" )
+    log "initial backend password written to $PASSWORD_FILE"
+}
+
+install_typo3_setup() {
+    local initial_password="$1"
 
     TYPO3_DB_DRIVER="${TYPO3_DB_DRIVER:-sqlite}" \
     TYPO3_DB_HOST="${TYPO3_DB_HOST:-localhost}" \
@@ -91,9 +112,6 @@ install_typo3() {
     TYPO3_PROJECT_NAME="$PROJECT_NAME" \
     TYPO3_SERVER_TYPE="apache" \
         typo3 setup --no-interaction --force
-
-    ( umask 077 ; printf '%s\n' "$initial_password" > "$PASSWORD_FILE" )
-    log "initial backend password written to $PASSWORD_FILE"
 }
 
 if [ ! -f typo3conf/system/settings.php ]; then

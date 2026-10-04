@@ -6,11 +6,13 @@ jedem Deployment Datenbank, Erweiterungen und Caches aktualisieren.
 
 ## Voraussetzungen
 
-* PHP **8.2** oder neuer (TYPO3 13 LTS). Auf dem Hosting ist das Standard-`php`
-  der Login-Shell älter, PHP 8.2 steht als `php8.2` bzw.
-  `/usr/local/php/8.2/php` bereit – Composer deshalb immer mit
-  `php8.2 $(command -v composer) …` aufrufen. `Build/deploy.sh` sucht sich die
-  passende Version selbst (`TYPO3_PHP_BINARY` überschreibt die Suche).
+* PHP **8.2** oder neuer (TYPO3 13 LTS). Das Deployment läuft mit der PHP-
+  Version der Umgebung (Staging: 8.2, `/usr/local/php/8.2/php`);
+  `Build/deploy.sh` nutzt genau diese (`php` im PATH des Deployments) und
+  sucht nur dann eine neuere, wenn sie älter als 8.2 ist. `TYPO3_PHP_BINARY`
+  überschreibt die Suche. Beim Arbeiten in der Login-Shell ist `php`
+  möglicherweise eine andere Version – Composer dort mit
+  `php8.2 $(command -v composer) …` aufrufen.
 * Composer 2
 * Datenbank: SQLite (Standard der Erstinstallation) oder MySQL/MariaDB
 
@@ -55,13 +57,24 @@ schreibt daraus `config/system/additional.php`, `Build/deploy.sh` übernimmt die
 Datei nach `typo3conf/system/additional.php`. Bestehende Inhalte müssen dabei
 migriert werden.
 
-Wichtig: die Pipeline schreibt `config/system/additional.php` auch dann, wenn
-`DEPLOY_DATABASE_URL` nicht gesetzt ist – dann mit leerem Benutzer und leerem
-Datenbanknamen. `Build/deployment/apply-database-config.php` übernimmt die
-Datei deshalb nur, wenn sie wirklich nutzbare Zugangsdaten enthält, und
-entfernt eine unbrauchbare Kopie eines früheren Deployments wieder. Sonst
-überschreibt sie die funktionierende Verbindung und das Deployment bricht nach
-dem Setup mit „Access denied for user ''@'localhost'“ ab.
+Wichtig: Deployments haben `config/system/additional.php` auch ohne gesetztes
+`DEPLOY_DATABASE_URL` geschrieben – dann mit leerem Benutzer und leerem
+Datenbanknamen. Diese Datei überschreibt die funktionierende Verbindung, und
+das Deployment bricht nach dem Setup mit „Access denied for user
+''@'localhost'“ ab. `Build/deployment/apply-database-config.php` hält das
+gerade:
+
+1. Es übernimmt `config/system/additional.php` nur mit nutzbaren Zugangsdaten.
+2. Eine unbrauchbare `typo3conf/system/additional.php` aus einem früheren
+   Deployment wird entfernt.
+3. Hat die Installation danach gar keine nutzbare Datenbank-Konfiguration
+   mehr, wird eine neue SQLite-Datenbank eingetragen. Eine Konfiguration mit
+   vollständigen Zugangsdaten bleibt immer unangetastet.
+
+`Build/deployment/check-database.php` prüft anschließend die Verbindung:
+ist die Datenbank erreichbar, aber leer (abgebrochene Erstinstallation), führt
+`Build/deploy.sh` die Installation zu Ende; ist sie nicht erreichbar, bricht
+das Deployment mit klarer Meldung ab, statt eine 500-Seite auszuliefern.
 
 ## Application Context und Site-Konfiguration
 

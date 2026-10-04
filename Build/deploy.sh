@@ -21,13 +21,15 @@ log() {
 }
 
 # ---------------------------------------------------------------------------
-# 1. PHP binary: TYPO3 13 LTS needs PHP >= 8.2, while the server's default
-#    "php" can still be an older version. TYPO3_PHP_BINARY overrides the
-#    detection if a host needs a specific path.
+# 1. PHP binary: the PHP of the deployment ("php" in its PATH) is used, it is
+#    the version the environment is configured with and the one composer
+#    installed the packages with. Only if that one is older than the PHP 8.2
+#    TYPO3 13 LTS needs, a newer binary is looked for. TYPO3_PHP_BINARY
+#    overrides the detection if a host needs a specific path.
 # ---------------------------------------------------------------------------
 find_php() {
     local candidate
-    for candidate in "${TYPO3_PHP_BINARY:-}" php8.4 php8.3 php8.2 php; do
+    for candidate in "${TYPO3_PHP_BINARY:-}" php php8.2 php8.3 php8.4; do
         [ -n "$candidate" ] || continue
         command -v "$candidate" >/dev/null 2>&1 || continue
         if "$candidate" -r 'exit(PHP_VERSION_ID >= 80200 ? 0 : 1);' >/dev/null 2>&1; then
@@ -62,15 +64,20 @@ mkdir -p typo3conf/system typo3conf/sites typo3temp/var fileadmin
 "$PHP_BIN" Build/deployment/apply-database-config.php
 
 # ---------------------------------------------------------------------------
-# 3. First run: install TYPO3. Without database credentials from the CI the
-#    installation uses SQLite, which needs no database server. If the project
-#    is later moved to MySQL (CI variable DEPLOY_DATABASE_URL, see README),
-#    the credentials in typo3conf/system/additional.php take precedence over
-#    the values written here - the existing content has to be migrated.
+# 3. Installation. Without database credentials from the CI the installation
+#    uses SQLite, which needs no database server. If the project is later
+#    moved to MySQL (CI variable DEPLOY_DATABASE_URL, see README), the
+#    credentials in typo3conf/system/additional.php take precedence over the
+#    values written here - the existing content has to be migrated.
+#
+#    "typo3 setup" writes the configuration, creates the database schema and
+#    the first backend user. It also runs when the configuration exists but
+#    the database is empty: a deployment that was interrupted during the first
+#    installation is finished that way instead of failing for good.
 # ---------------------------------------------------------------------------
-if [ ! -f typo3conf/system/settings.php ]; then
-    log "no settings.php yet - installing TYPO3"
-    INITIAL_PASSWORD="$("$PHP_BIN" Build/deployment/generate-password.php)"
+install_typo3() {
+    local initial_password
+    initial_password="$("$PHP_BIN" Build/deployment/generate-password.php)"
 
     TYPO3_DB_DRIVER="${TYPO3_DB_DRIVER:-sqlite}" \
     TYPO3_DB_HOST="${TYPO3_DB_HOST:-localhost}" \
@@ -79,14 +86,40 @@ if [ ! -f typo3conf/system/settings.php ]; then
     TYPO3_DB_USERNAME="${TYPO3_DB_USERNAME:-typo3}" \
     TYPO3_DB_PASSWORD="${TYPO3_DB_PASSWORD:-}" \
     TYPO3_SETUP_ADMIN_USERNAME="$ADMIN_USER" \
-    TYPO3_SETUP_ADMIN_PASSWORD="$INITIAL_PASSWORD" \
+    TYPO3_SETUP_ADMIN_PASSWORD="$initial_password" \
     TYPO3_SETUP_ADMIN_EMAIL="$ADMIN_EMAIL" \
     TYPO3_PROJECT_NAME="$PROJECT_NAME" \
     TYPO3_SERVER_TYPE="apache" \
         typo3 setup --no-interaction --force
 
-    ( umask 077 ; printf '%s\n' "$INITIAL_PASSWORD" > "$PASSWORD_FILE" )
+    ( umask 077 ; printf '%s\n' "$initial_password" > "$PASSWORD_FILE" )
     log "initial backend password written to $PASSWORD_FILE"
+}
+
+if [ ! -f typo3conf/system/settings.php ]; then
+    log "no settings.php yet - installing TYPO3"
+    install_typo3
+else
+    # A database that cannot be reached would otherwise only show up as a 500
+    # error in the browser, so it is checked before anything is changed.
+    log "checking the database"
+    set +e
+    "$PHP_BIN" Build/deployment/check-database.php
+    DATABASE_STATE=$?
+    set -e
+
+    case "$DATABASE_STATE" in
+        0) ;;
+        10)
+            log "the configuration exists, but the database is empty - completing the installation"
+            install_typo3
+            ;;
+        *)
+            log "ERROR: the database of typo3conf/system/settings.php cannot be reached (see above)."
+            log "       Set DEPLOY_DATABASE_URL in the deployment or remove the wrong credentials."
+            exit 1
+            ;;
+    esac
 fi
 
 # ---------------------------------------------------------------------------

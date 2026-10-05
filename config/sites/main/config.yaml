@@ -9,6 +9,12 @@ baseVariants:
     # the environment is reachable under.
     base: /github-public-staging/
     condition: 'applicationContext == "Development/staging"'
+  -
+    # The live installation is served from /github-public-live/ and needs the
+    # same relative base (see above). Without this variant TYPO3 only knows
+    # the base "/" and answers "Page Not Found" there.
+    base: /github-public-live/
+    condition: 'applicationContext == "Production/Live"'
 websiteTitle: 'signundsinn GmbH'
 dependencies:
   - typo3/fluid-styled-content

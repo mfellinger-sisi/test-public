@@ -295,12 +295,15 @@ AddDefaultCharset utf-8
 
 	# PROJECT: application context. Web requests do not inherit the context of
 	# the deployment, so it is derived from the path the installation is served
-	# from: the staging installation lives in /github-public-staging/, every
-	# other location is treated as production. The site configuration
-	# (typo3conf/sites/main/config.yaml) picks its base URL from it.
+	# from: the staging installation lives in /github-public-staging/, the live
+	# installation in /github-public-live/, every other location is treated as
+	# production. The site configuration (config/sites/main/config.yaml) picks
+	# its base URL from it.
 	RewriteCond %{REQUEST_URI} ^/github-public-staging(?:/|$)
 	RewriteRule .? - [E=TYPO3_CONTEXT:Development/staging]
-	RewriteCond %{REQUEST_URI} !^/github-public-staging(?:/|$)
+	RewriteCond %{REQUEST_URI} ^/github-public-live(?:/|$)
+	RewriteRule .? - [E=TYPO3_CONTEXT:Production/Live]
+	RewriteCond %{REQUEST_URI} !^/github-public-(?:staging|live)(?:/|$)
 	RewriteRule .? - [E=TYPO3_CONTEXT:Production]
 
 	# Rule for versioned static files, configured through:

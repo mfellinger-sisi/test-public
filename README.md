@@ -106,12 +106,12 @@ das Deployment mit klarer Meldung ab, statt eine 500-Seite auszuliefern.
 ## Application Context und Site-Konfiguration
 
 Web-Requests erhalten den Kontext über die `public/.htaccess`: Pfade unter
-`/github-public-staging/` laufen als `Development/staging`, alles andere als
-`Production`. `config/sites/main/config.yaml` wählt daran die Basis-URL
-(`baseVariants`). Kommt eine weitere Umgebung hinzu, beide Stellen ergänzen.
+`/github-public-staging/` laufen als `Development/staging`, Pfade unter
+`/github-public-live/` als `Production/Live`, alles andere als `Production`. `config/sites/main/config.yaml` wählt daran die Basis-URL
+(`baseVariants`: `/github-public-staging/` bzw. `/github-public-live/`). Kommt eine weitere Umgebung hinzu, beide Stellen ergänzen.
 
-Die Basis-URLs sind absichtlich **relativ** (`/` bzw.
-`/github-public-staging/`) und enthalten keine Domain: TYPO3 findet seine Site
+Die Basis-URLs sind absichtlich **relativ** (`/`,
+`/github-public-staging/` bzw. `/github-public-live/`) und enthalten keine Domain: TYPO3 findet seine Site
 damit unter jedem Hostnamen und sowohl über `http` als auch über `https`. Eine
 absolute Basis-URL führt bei jedem Domainwechsel zu „No site configuration
 found“. Aus demselben Grund wird `reverseProxySSL` nicht gesetzt – das Schema

@@ -6,6 +6,7 @@
 # Voraussetzung: "composer install" ist gelaufen (in der CI liefert der Composer-Job
 # vendor/ als Artefakt). Klassen von TYPO3, Doctrine & Co. werden aus vendor/ geladen;
 # fehlende Klassen werden bewusst gemeldet und nicht ausgeblendet.
+# Die Datei enthaelt daher keine ignoreErrors-Eintraege fuer fehlende Klassen.
 parameters:
     level: 8
     paths:

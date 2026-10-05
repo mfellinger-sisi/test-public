@@ -2,21 +2,17 @@
 # Analysiert die tatsaechlich vorhandenen PHP-Pfade des Projekts (Deployment-Skripte
 # unter Build/). Kommt eine eigene Extension bzw. ein Sitepackage dazu (extensions/
 # oder packages/), den Pfad unter "paths" ergaenzen.
+#
+# Voraussetzung: "composer install" ist gelaufen (in der CI liefert der Composer-Job
+# vendor/ als Artefakt). Klassen von TYPO3, Doctrine & Co. werden aus vendor/ geladen;
+# fehlende Klassen werden bewusst gemeldet und nicht ausgeblendet.
 parameters:
     level: 8
     paths:
         - %currentWorkingDirectory%/Build
+    bootstrapFiles:
+        - %currentWorkingDirectory%/vendor/autoload.php
     excludePaths:
         analyse:
             - */vendor/*
             - */node_modules/*
-    ignoreErrors:
-        # Die Deployment-Skripte laufen vor/neben TYPO3 und nutzen dessen Klassen aus
-        # vendor/, das PHPStan hier nicht einliest.
-        -
-            message: '#unknown class (TYPO3|Doctrine)\\#'
-            path: %currentWorkingDirectory%/Build/deployment/*
-        -
-            message: '#Class (TYPO3|Doctrine)\\.+ not found#'
-            path: %currentWorkingDirectory%/Build/deployment/*
-    reportUnmatchedIgnoredErrors: false
